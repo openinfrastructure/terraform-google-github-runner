@@ -1,37 +1,30 @@
 # cloud-config
 users:
-  - name: gitlab-runner
+  - name: github-runner
     shell: /bin/bash
     uid: 2000
     groups:
       - docker
 
 write_files:
-  - path: /etc/gitlab-runner/config.toml
-    owner: root:root
-    permissions: '0644'
-    content: |
-      # Prometheus metrics at /metrics, also used for health checks.
-      listen_address = ":${hc_port}"
-      concurrent = ${concurrent}
   - path: /var/lib/cloud/bin/firewall
     permissions: 0755
     owner: root
     content: |
       #! /bin/bash
       iptables -w -A INPUT -p tcp --dport ${hc_port} -j ACCEPT
-  - path: /var/run/gitlab-runner-register
+  - path: /var/run/github-runner-register
     permissions: 0600
     owner: root
     content: |
       REGISTRATION_TOKEN=${registration_token}
-  - path: /etc/systemd/system/gitlab-runner-register.service
+  - path: /etc/systemd/system/github-runner-register.service
     permissions: 0644
     owner: root
     content: |
       [Unit]
-      Description=GitLab Runner Registration/Unregistration
-      ConditionFileIsExecutable=/var/lib/google/bin/gitlab-runner
+      Description=GitHub Runner Registration/Unregistration
+      ConditionFileIsExecutable=/var/lib/google/bin/github-runner
       After=syslog.target network-online.target
       [Service]
       EnvironmentFile=/var/run/gitlab-runner-register

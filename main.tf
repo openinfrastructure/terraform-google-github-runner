@@ -13,10 +13,10 @@
 # limitations under the License.
 
 locals {
-  service_account_email = "${var.service_account_email == "" ? "${var.name}@${var.project}" : var.service_account_email}"
+  service_account_email = "${var.service_account_email == "" ? "${var.name}@${var.project_id}" : var.service_account_email}"
   tags                  = var.tags
-  tag-list              = "${join(",", concat(list(var.name), var.tag-list))}"
-  subnetwork_project    = "${var.subnetwork_project == "" ? var.subnetwork_project : var.project}"
+  label-list              = "${join(",", concat(list(var.name), var.label-list))}"
+  subnetwork_project    = "${var.subnetwork_project == "" ? var.subnetwork_project : var.project_id}"
 }
 
 # Main cloud-init config
@@ -24,12 +24,11 @@ data "template_file" "cloud-init" {
   template = "${file("${path.module}/templates/init.cfg.tpl")}"
 
   vars = {
-    gitlab-runner-url  = var.gitlab-runner-url
-    gitlab-url         = var.gitlab-url
+    github-runner-url  = var.github-runner-url
+    github-url         = var.github-url
     registration_token = var.registration_token
-    tag-list           = local.tag-list
+    tag-list           = local.label-list
     hc_port            = var.hc_port
-    concurrent         = var.concurrent
   }
 }
 
@@ -51,11 +50,11 @@ data "template_file" "shutdown-script" {
   template = "${file("${path.module}/templates/shutdown-script.tpl")}"
 }
 
-resource google_compute_instance_template "gitlab-runner" {
+resource google_compute_instance_template "github-runner" {
   name_prefix  = "${var.name}-"
   machine_type = var.machine_type
   region       = var.region
-  project      = var.project
+  project      = var.project_id
 
   tags = local.tags
 
@@ -73,7 +72,7 @@ resource google_compute_instance_template "gitlab-runner" {
   }
 
   metadata = {
-    # cloud-init used to setup gitlab-runner
+    # cloud-init used to setup runner
     user-data = data.template_cloudinit_config.cloud-config.rendered
     # de-register on shutdown
     shutdown-script = data.template_file.shutdown-script.rendered
@@ -94,8 +93,8 @@ resource google_compute_instance_template "gitlab-runner" {
   }
 }
 
-resource "google_compute_region_instance_group_manager" "gitlab-runner" {
-  project  = var.project
+resource "google_compute_region_instance_group_manager" "github-runner" {
+  project  = var.project_id
   name     = var.name
 
   base_instance_name = var.name
@@ -117,24 +116,24 @@ resource "google_compute_region_instance_group_manager" "gitlab-runner" {
   target_size = var.num_instances
 
   named_port {
-    name = "gitlab-runner"
+    name = "github-runner"
     port = var.hc_port
   }
 
   auto_healing_policies {
-    health_check      = google_compute_health_check.gitlab-runner.self_link
+    health_check      = google_compute_health_check.github-runner.self_link
     initial_delay_sec = var.hc_initial_delay_secs
   }
 
   version {
     name              = var.name
-    instance_template = google_compute_instance_template.gitlab-runner.self_link
+    instance_template = google_compute_instance_template.github-runner.self_link
   }
 }
 
-resource google_compute_health_check "gitlab-runner" {
+resource google_compute_health_check "github-runner" {
   name    = var.name
-  project = var.project
+  project = var.project_id
 
   check_interval_sec  = var.hc_interval
   timeout_sec         = var.hc_timeout
