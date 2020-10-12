@@ -119,7 +119,7 @@ variable "hc_path" {
 
 variable "tags" {
   description = "Additional network tags added to instances.  Intended for opening VPC firewall access for health checks."
-  type        = string
+  type        = list(string)
   default     = ["allow-health-check"]
 }
 
