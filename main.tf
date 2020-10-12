@@ -15,8 +15,8 @@
 locals {
   service_account_email = "${var.service_account_email == "" ? "${var.name}@${var.project_id}" : var.service_account_email}"
   tags                  = var.tags
-  label-list              = "${join(",", concat(list(var.name), var.label-list))}"
-  subnetwork_project    = "${var.subnetwork_project == "" ? var.subnetwork_project : var.project_id}"
+  label-list            = "${join(",", concat(list(var.name), var.label-list))}"
+  subnetwork_project    = "${var.subnetwork_project == "" ? var.project_id : var.subnetwork_project}"
 }
 
 # Main cloud-init config
