@@ -69,7 +69,7 @@ After=network.target
 [Service]
 Type=simple
 User=nobody
-Group=nogroup
+Group=nobody
 Restart=always
 WorkingDirectory=/var/lib/google/status
 ExecStart=@/usr/bin/python3 "/usr/bin/python3" "-m" "http.server" "9000"
