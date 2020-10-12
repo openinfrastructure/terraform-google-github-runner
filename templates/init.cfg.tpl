@@ -30,23 +30,23 @@ write_files:
       EnvironmentFile=/var/run/github-runner-register
       Type=oneshot
       RemainAfterExit=yes
-      ExecStart=
-      ExecStop=/var/lib/google/bin/gitlab-runner "unregister" "--config" "/etc/gitlab-runner/config.toml" "--all-runners"
+      # ExecStart=
+      # ExecStop=
       [Install]
       WantedBy=multi-user.target
-  - path: /etc/systemd/system/gitlab-runner.service
+  - path: /etc/systemd/system/github-runner.service
     permissions: 0644
     owner: root
     content: |
       [Unit]
-      Description=GitLab Runner
-      ConditionFileIsExecutable=/var/lib/google/bin/gitlab-runner
-      After=gitlab-runner-register.service syslog.target network-online.target
-      Requires=gitlab-runner-register.service
+      Description=Github Runner
+      # ConditionFileIsExecutable=/var/lib/google/bin/gitlab-runner
+      After=github-runner-register.service syslog.target network-online.target
+      Requires=github-runner-register.service
       [Service]
       StartLimitInterval=5
       StartLimitBurst=10
-      ExecStart=/var/lib/google/bin/gitlab-runner "run" "--working-directory" "/home/gitlab-runner" "--config" "/etc/gitlab-runner/config.toml" "--service" "gitlab-runner" "--syslog" "--user" "gitlab-runner"
+      # ExecStart=/var/lib/google/bin/github-runner "run" "--working-directory" "/home/gitlab-runner" "--config" "/etc/gitlab-runner/config.toml" "--service" "gitlab-runner" "--syslog" "--user" "gitlab-runner"
       Restart=always
       RestartSec=120
       [Install]
