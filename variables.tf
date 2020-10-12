@@ -108,37 +108,37 @@ variable "hc_initial_delay_secs" {
 variable "hc_interval" {
   description = "Health check, check interval in seconds."
   type        = number
-  default     = 3
+  default     = 10
 }
 
 variable "hc_timeout" {
   description = "Health check, timeout in seconds."
   type        = number
-  default     = 2
+  default     = 5
 }
 
 variable "hc_healthy_threshold" {
-  description = "A so-far unhealthy instance will be marked healthy after this many consecutive successes. The default value is 2."
+  description = "A so-far unhealthy instance will be marked healthy after this many consecutive successes."
   type        = number
   default     = 2
 }
 
 variable "hc_unhealthy_threshold" {
-  description = "A so-far healthy instance will be marked unhealthy after this many consecutive failures. The default value is 2."
+  description = "A so-far healthy instance will be marked unhealthy after this many consecutive failures."
   type        = number
-  default     = 2
+  default     = 3
 }
 
 variable "hc_port" {
-  description = "Health check port"
+  description = "Health check port."
   type        = string
-  default     = "9252"
+  default     = "9000"
 }
 
 variable "hc_path" {
   description = "Health check, the http path to check."
   type        = string
-  default     = "/metrics"
+  default     = "/status.json"
 }
 
 variable "tags" {
