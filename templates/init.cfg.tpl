@@ -27,10 +27,10 @@ write_files:
       ConditionFileIsExecutable=/var/lib/google/bin/github-runner
       After=syslog.target network-online.target
       [Service]
-      EnvironmentFile=/var/run/gitlab-runner-register
+      EnvironmentFile=/var/run/github-runner-register
       Type=oneshot
       RemainAfterExit=yes
-      ExecStart=/var/lib/google/bin/gitlab-runner "register" "--non-interactive" "--url" "${gitlab-url}" "--executor" "docker" --docker-image alpine:latest --tag-list "${tag-list}" --run-untagged="true" --locked="false" --access-level="not_protected"
+      ExecStart=
       ExecStop=/var/lib/google/bin/gitlab-runner "unregister" "--config" "/etc/gitlab-runner/config.toml" "--all-runners"
       [Install]
       WantedBy=multi-user.target
@@ -68,9 +68,9 @@ write_files:
 runcmd:
   - mkdir /var/lib/google/tmp
   - mkdir /var/lib/google/bin
-  - curl -L --output /var/lib/google/tmp/gitlab-runner ${gitlab-runner-url}
-  - install -o 0 -g 0 -m 0755 /var/lib/google/tmp/gitlab-runner /var/lib/google/bin/gitlab-runner
+  - mkdir /var/lib/google/actions-runner
+  - curl -L --output /var/lib/google/tmp/actions-runner.tgz ${github-runner-url}
+  - (cd /var/lib/google/actions-runner && tar -xzf /var/lib/google/tmp/actions-runner.tgz)
+  - (cd /var/lib/google/actions-runner && ./config.sh --url ${github-url} --token ${registration_token}
   - systemctl daemon-reload
   - systemctl start firewall.service
-  - systemctl start gitlab-runner-register.service
-  - systemctl start gitlab-runner.service
