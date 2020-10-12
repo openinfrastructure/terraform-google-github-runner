@@ -45,10 +45,34 @@ variable "region" {
   default     = "us-west1"
 }
 
-variable "os_image" {
-  description = "The OS image for VM instances"
+variable "zones" {
+  description = "The zones in the region to distribute instances across.  If empty, all available zones in the region are used."
+  type        = list(string)
+  default     = []
+}
+
+variable "image_project" {
+  description = "The image project used with the MIG instance template"
   type        = string
-  default     = "cos-cloud/cos-stable"
+  default     = "centos-cloud"
+}
+
+variable "image_name" {
+  description = "The image name used with the MIG instance template.  If the value is the empty string, image_family is used instead."
+  type        = string
+  default     = ""
+}
+
+variable "disk_size_gb" {
+  description = "The size in GB of the primary disk for each image"
+  type        = string
+  default     = "100"
+}
+
+variable "image_family" {
+  description = "Configures templates to use the latest non-deprecated image in the family at the point Terraform apply is run.  Used only if image_name is empty."
+  type        = string
+  default     = "centos-8"
 }
 
 variable "subnetwork" {
@@ -127,12 +151,6 @@ variable "update_policy_type" {
   description = "The type of update. Valid values are 'OPPORTUNISTIC', 'PROACTIVE'"
   type        = string
   default     = "OPPORTUNISTIC"
-}
-
-variable "automatic_restart" {
-  description = "If true, automatically restart instances on maintenance events.  See https://cloud.google.com/compute/docs/instances/live-migration#autorestart"
-  type        = bool
-  default     = false
 }
 
 variable "preemptible" {
