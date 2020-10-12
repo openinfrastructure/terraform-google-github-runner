@@ -61,7 +61,7 @@ resource google_compute_instance_template "github-runner" {
   disk {
     auto_delete  = true
     boot         = true
-    source_image = var.os_image
+    source_image = data.google_compute_image.img.self_link
     type         = "PERSISTENT"
     disk_size_gb = var.disk_size_gb
   }
