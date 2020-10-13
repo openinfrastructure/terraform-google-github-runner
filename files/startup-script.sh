@@ -19,6 +19,22 @@
 
 set -u
 
+instance_id() {
+  if [[ -z "${INSTANCE_ID:-}" ]]; then
+    if [[ -s /etc/google_instance_id ]]; then
+      INSTANCE_ID="$(</etc/google_instance_id)"
+    else
+      local tmpfile
+      tmpfile="$(mktemp)"
+      curl -s -S -f -o "$tmpfile" -H Metadata-Flavor:Google metadata/computeMetadata/v1/instance/id
+      INSTANCE_ID="$(<"$tmpfile")"
+    fi
+  fi
+
+  echo "$INSTANCE_ID"
+  return 0
+}
+
 error() {
   if [[ -n "${STARTUP_SCRIPT_STDLIB_INITIALIZED:-}" ]]; then
     stdlib::error "$@"
@@ -121,14 +137,39 @@ EOF
   return $rval
 }
 
+# https://phoenixnap.com/kb/how-to-install-docker-on-centos-8
+setup_docker() {
+  cmd dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+  cmd dnf install -y docker-ce --nobest
+  cmd systemctl start docker
+}
+
+setup_runner() {
+  local tmpfile sha name
+  tmpfile="$(mktemp)"
+  cmd groupadd --system actions
+  cmd useradd --system --gid actions --home-dir /var/lib/actions --create-home actions
+  curl -o "$tmpfile" -L "${RUNNER_URL}"
+  (cd /var/lib/actions && cmd tar -xzf "${tmpfile}")
+  cmd chown -R actions:actions /var/lib/actions
+  # Avoid using the same hostname twice, which happens when an instance is auto-healed.
+  sha="$(echo -n "${HOSTNAME}-$(instance_id)" | openssl sha1)"
+  name="${HOSTNAME}-${sha::-4}"
+  # See https://github.com/actions/runner/blob/v2.273.5/src/Runner.Common/Constants.cs#L85-L108
+  # for undocumented arguments used to automate the process
+  (cd /var/lib/actions && sudo -H -u actions ./config.sh --name ${name} --work _work --labels ${LABELS} --url ${GITHUB_URL} --token ${REGISTRATION_TOKEN} --unattended)
+  (cd /var/lib/actions && ./svc.sh --unattended)
+}
+
 main() {
-  local jobs
-
-  info "BEGIN: Policy Routing Startup for ${HOSTNAME}"
-
   if ! setup_status_api; then
     error "Failed to configure status API endpoints, aborting."
     exit 2
+  fi
+
+  if ! setup_docker; then
+    error "Failed to setup Docker, aborting."
+    exit 3
   fi
 
   if ! workaround_guest_agent; then
@@ -136,8 +177,10 @@ main() {
     exit 4
   fi
 
-  # Nice to have packages
-  yum -y install docker
+  if ! setup_runner; then
+    error "Failed to setup Github Actions Runner, aborting."
+    exit 5
+  fi
 
   return 0
 }

@@ -26,7 +26,7 @@ data "google_compute_zones" "available" {
 locals {
   service_account_email = "${var.service_account_email == "" ? "${var.name}@${var.project_id}" : var.service_account_email}"
   tags                  = var.tags
-  label-list            = "${join(",", concat(list(var.name), var.label-list))}"
+  labels                = "${join(",", concat(list(var.name), var.labels))}"
   subnetwork_project    = "${var.subnetwork_project == "" ? var.project_id : var.subnetwork_project}"
   zones                 = length(var.zones) > 0 ? var.zones : data.google_compute_zones.available.names
 }
@@ -38,10 +38,10 @@ module "startup-script-lib" {
 data "template_file" "startup-script-config" {
   template = "${file("${path.module}/templates/startup-script-config.tpl")}"
   vars = {
-    github-runner-url  = var.github-runner-url
-    github-url         = var.github-url
+    runner_url         = var.runner_url
+    github_url         = var.github_url
     registration_token = var.registration_token
-    tag-list           = local.label-list
+    labels             = local.labels
   }
 }
 

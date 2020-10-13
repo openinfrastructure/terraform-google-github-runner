@@ -9,16 +9,15 @@ variable "name" {
   default     = "github-runner"
 }
 
-variable "github-runner-url" {
+variable "runner_url" {
   description = "The source URL used to install the github-runner onto the VM host os.  Passed to curl via cloud-config runcmd."
   type        = string
   default     = "https://github.com/actions/runner/releases/download/v2.273.5/actions-runner-linux-x64-2.273.5.tar.gz"
 }
 
-variable "github-url" {
-  description = "The URL used to register the instance"
+variable "github_url" {
+  description = "The URL used to register the instance, for example https://github.com/myorg/myrepo"
   type        = string
-  default     = "https://github.com/openinfrastructure/platform"
 }
 
 variable "registration_token" {
@@ -27,7 +26,7 @@ variable "registration_token" {
   default     = ""
 }
 
-variable "label-list" {
+variable "labels" {
   description = "Assign labels to this runner.  See https://docs.github.com/en/free-pro-team@latest/actions/hosting-your-own-runners/using-labels-with-self-hosted-runners"
   type        = list
   default     = ["docker", "gcp"]
