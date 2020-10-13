@@ -1,59 +1,52 @@
 # cloud-config
 users:
-  - name: gitlab-runner
+  - name: github-runner
     shell: /bin/bash
     uid: 2000
     groups:
       - docker
 
 write_files:
-  - path: /etc/gitlab-runner/config.toml
-    owner: root:root
-    permissions: '0644'
-    content: |
-      # Prometheus metrics at /metrics, also used for health checks.
-      listen_address = ":${hc_port}"
-      concurrent = ${concurrent}
   - path: /var/lib/cloud/bin/firewall
     permissions: 0755
     owner: root
     content: |
       #! /bin/bash
       iptables -w -A INPUT -p tcp --dport ${hc_port} -j ACCEPT
-  - path: /var/run/gitlab-runner-register
+  - path: /var/run/github-runner-register
     permissions: 0600
     owner: root
     content: |
       REGISTRATION_TOKEN=${registration_token}
-  - path: /etc/systemd/system/gitlab-runner-register.service
+  - path: /etc/systemd/system/github-runner-register.service
     permissions: 0644
     owner: root
     content: |
       [Unit]
-      Description=GitLab Runner Registration/Unregistration
-      ConditionFileIsExecutable=/var/lib/google/bin/gitlab-runner
+      Description=GitHub Runner Registration/Unregistration
+      ConditionFileIsExecutable=/var/lib/google/bin/github-runner
       After=syslog.target network-online.target
       [Service]
-      EnvironmentFile=/var/run/gitlab-runner-register
+      EnvironmentFile=/var/run/github-runner-register
       Type=oneshot
       RemainAfterExit=yes
-      ExecStart=/var/lib/google/bin/gitlab-runner "register" "--non-interactive" "--url" "${gitlab-url}" "--executor" "docker" --docker-image alpine:latest --tag-list "${tag-list}" --run-untagged="true" --locked="false" --access-level="not_protected"
-      ExecStop=/var/lib/google/bin/gitlab-runner "unregister" "--config" "/etc/gitlab-runner/config.toml" "--all-runners"
+      # ExecStart=
+      # ExecStop=
       [Install]
       WantedBy=multi-user.target
-  - path: /etc/systemd/system/gitlab-runner.service
+  - path: /etc/systemd/system/github-runner.service
     permissions: 0644
     owner: root
     content: |
       [Unit]
-      Description=GitLab Runner
-      ConditionFileIsExecutable=/var/lib/google/bin/gitlab-runner
-      After=gitlab-runner-register.service syslog.target network-online.target
-      Requires=gitlab-runner-register.service
+      Description=Github Runner
+      # ConditionFileIsExecutable=/var/lib/google/bin/gitlab-runner
+      After=github-runner-register.service syslog.target network-online.target
+      Requires=github-runner-register.service
       [Service]
       StartLimitInterval=5
       StartLimitBurst=10
-      ExecStart=/var/lib/google/bin/gitlab-runner "run" "--working-directory" "/home/gitlab-runner" "--config" "/etc/gitlab-runner/config.toml" "--service" "gitlab-runner" "--syslog" "--user" "gitlab-runner"
+      # ExecStart=/var/lib/google/bin/github-runner "run" "--working-directory" "/home/gitlab-runner" "--config" "/etc/gitlab-runner/config.toml" "--service" "gitlab-runner" "--syslog" "--user" "gitlab-runner"
       Restart=always
       RestartSec=120
       [Install]
@@ -75,9 +68,9 @@ write_files:
 runcmd:
   - mkdir /var/lib/google/tmp
   - mkdir /var/lib/google/bin
-  - curl -L --output /var/lib/google/tmp/gitlab-runner ${gitlab-runner-url}
-  - install -o 0 -g 0 -m 0755 /var/lib/google/tmp/gitlab-runner /var/lib/google/bin/gitlab-runner
+  - mkdir /var/lib/google/actions-runner
+  - curl -L --output /var/lib/google/tmp/actions-runner.tgz ${github-runner-url}
+  - (cd /var/lib/google/actions-runner && tar -xzf /var/lib/google/tmp/actions-runner.tgz)
+  - (cd /var/lib/google/actions-runner && ./config.sh --url ${github-url} --token ${registration_token}
   - systemctl daemon-reload
   - systemctl start firewall.service
-  - systemctl start gitlab-runner-register.service
-  - systemctl start gitlab-runner.service
